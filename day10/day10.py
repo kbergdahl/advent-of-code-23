@@ -80,62 +80,23 @@ print("The solution should be the one that there are two of among the trials")
 
 myPath = np.zeros((len(myMap), len(myMap[0])))
 
-step = 2
 goal_pos = possible_directions[0]
 goal_symbol = myMap[goal_pos[0]][goal_pos[1]]
 current_pos = start
-
+visited = [current_pos]
 
 while goal_symbol != 'S':
-    myPath[current_pos[0], current_pos[1]] = step
-
     current_pos, goal_pos = one_step(current_pos, goal_pos, goal_symbol)
     if current_pos:
         goal_symbol = myMap[goal_pos[0]][goal_pos[1]]
-        step += 1
-myPath[current_pos[0], current_pos[1]] = step
+    visited.append(current_pos)
 
-# We need to know the difference of the start and end step to be able to connect them
-end_value = np.max(myPath)
+# Shoelace to get area A defined by the visited
+area = sum([visited[i][0] * (visited[i+1][1] - visited[i-1][1]) for i in range(-1, len(visited)-1)]) / 2
 
-# Conditions under which the path continues to the left
-def path_continues(line, ind):
-    is_start_end = line[ind] == 2 and line[ind+1] == end_value
-    is_adjacent = np.abs(line[ind] - line[ind+1]) == 1
-    return is_start_end or is_adjacent
-
-inside = False
-sum = 0
-for row, line in enumerate(myPath):
-    # If we have crossed the path an odd number of times, we are inside.
-    # If we have crossed it an even number of times, we are outside
-
-    # When there is more than one part of the path in a row, we have to know if the path is crossing or turning at our line
-    first_in_segment = True
-
-    for col, point in enumerate(line):
-        if point == 0 and inside:
-            sum += 1
-        elif point > 0:
-            # If this is the start of a segment
-            if col == 0 or (np.abs(line[col] - line[col-1]) > 2 and np.abs(line[col] - line[col-1]) < (end_value-2)):
-                # Find the end of this segment
-                end_col = col
-                seg_len = 1
-                while (col + seg_len) < len(line) and path_continues(line, col+seg_len-1):
-                    seg_len += 1
-                
-                # Check if this crosses or turns and toggle inside if it does
-                # Cannot cross if we are at the top or bottom
-                if row == 0 or row == (len(myPath)-1):
-                    pass
-                # Definitely crosses if the segment is just 1
-                elif seg_len == 1:
-                    inside = not inside
-                else:
-                    come_from_above = np.abs(myPath[row-1][col] - point) < 2
-                    go_to_above = np.abs(myPath[row-1][col+seg_len-1] - myPath[row][col+seg_len-1]) < 2
-                    if come_from_above != go_to_above:
-                        inside = not inside
-
-print(sum)
+# Pick's
+# A = i + b/2 - 1
+# We know b and A, want to solve for i
+# i = A - b/2 + 1
+interior = area - len(visited)/2 + 1
+print(interior)
